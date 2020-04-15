@@ -7,3 +7,5 @@ Right now, my phone is telling me that I am at about 30.623006 degrees latitude 
 1 degree of longitude = 111412.84cos(phi) - 93.5cos(3phi) + 0.118cos(5phi) meters
 
 This means that 1 degree of latitude is about 110862.9887 meters, and 1 degree of longitude is about 95877.9400 meters.  I kept the extra digits so we don't round our intermediate calculations too much.
+
+We can convert our latitude and longitude from decimal degrees to degrees, minutes, and seconds using the "degrees2dms()" function in matlab.   Using the function shows that our latitude is 30 degrees, 37 minutes, and 22.595 seconds, while our longitude is -96 degrees, 20 minutes, and 41.298 seconds.  
