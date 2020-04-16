@@ -1,10 +1,10 @@
 clear all; clc; close all;
 
 % load file
-matFile = 'data_collection/walk2_100.mat';
-load(matFile)
+mat_file = 'data_collection/walk2_100.mat';
+load(mat_file)
+
+[accel, gyro, mag_field, orientation, gps] = dataExtract(mat_file);
 
 
-longTable = timetable2table(Position(:, 1));
-longArray = table2array(longTable)
 
