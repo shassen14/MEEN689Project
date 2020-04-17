@@ -27,7 +27,6 @@ avX = AngularVelocity.X;
 avY = AngularVelocity.Y;
 avZ = AngularVelocity.Z;
 
-% [time, Pitch rate, Roll rate, Yaw rate]
 gyro = [avTime, avX, avY, avZ];
 
 
@@ -39,8 +38,6 @@ magX = MagneticField.X;
 magY = MagneticField.Y;
 magZ = MagneticField.Z;
 
-% [time, magnetic field x direction, mag field y direction, mag field z
-% direction]
 mag_field = [magTime, magX, magY, magZ];
 
 
@@ -52,7 +49,6 @@ oX = Orientation.X;
 oY = Orientation.Y;
 oZ = Orientation.Z;
 
-% [time, pitch, roll, yaw]
 orientation = [oTime, oX, oY, oZ];
 
 
