@@ -90,7 +90,7 @@ Xo_est = [accX(1),accY(1),accZ(1),avX(1),avY(1),avZ(1),oX(1),oY(1),oZ(1),magX(1)
 
 %Covariance Po
 
-Po = 
+%Po = 
 
 
 
