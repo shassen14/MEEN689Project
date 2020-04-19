@@ -1,8 +1,0 @@
-clear all; clc; close all;
-
-% load file
-matFile = 'data_collection/walk2_100.mat';
-load(matFile)
-
-
-long, lat = Position(:, 1:2)

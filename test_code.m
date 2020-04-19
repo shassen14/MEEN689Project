@@ -1,10 +1,9 @@
 clear all; clc; close all;
+% this is strictly just to test code that you want. Go crazy
+
 
 % load file
-matFile = 'data_collection/walk2_100.mat';
-load(matFile)
+mat_file = 'data_collection/walk2_100.mat';
+load(mat_file)
 
-
-longTable = timetable2table(Position(:, 1));
-longArray = table2array(longTable)
-
+[accel, gyro, mag_field, orientation, gps] = dataExtract(mat_file);
