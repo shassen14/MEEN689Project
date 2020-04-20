@@ -1,106 +1,38 @@
 clc;clear all;close all;
 
-%this gets data from my phone
-%you need to load the data into Matlab with something like
-load('sensorlog_20200410_132333.mat')
-%% Acceleration
-accDatetime = Acceleration.Timestamp;
-[acchrs, accm, accs] = hms(accDatetime);
-accTime = accm*60 + accs - (accm(1)*60 + accs(1));
-accX = Acceleration.X;
-accY = Acceleration.Y;
-accZ = Acceleration.Z;
+%% This is some documentation
+%this is the state x:
+% x = [x
+%     y
+%     xd
+%     yd
+%     xdd
+%     ydd
+%     theta
+%     thetad]
+%we have 8 states
 
-figure(1)
-plot(accTime,accX,accTime,accY,accTime,accZ)
-title('Acceleration')
-legend('X','Y','Z')
-grid on
+%% This is Our Real Data!!
 
-%% Angular Velocity
-avDatetime = AngularVelocity.Timestamp;
-[avhrs, avm, avs] = hms(avDatetime);
-avTime = avm*60 + avs - (avm(1)*60 + avs(1));
-avX = AngularVelocity.X;
-avY = AngularVelocity.Y;
-avZ = AngularVelocity.Z;
+mat_file = 'data_collection/walk1_went too far.mat';
+load(mat_file)
 
-figure(2)
-plot(avTime,avX,avTime,avY,avTime,avZ)
-title('Angular Velocity')
-legend('X','Y','Z')
-grid on
+[accel, gyro, mag_field, orientation, gps] = dataExtract(mat_file);
 
-%% Orientation
-oDatetime = Orientation.Timestamp;
-[ohrs, om, os] = hms(oDatetime);
-oTime = om*60 + os - (om(1)*60 + os(1));
-oX = Orientation.X;
-oY = Orientation.Y;
-oZ = Orientation.Z;
+dt = 0.01;%For now
+fastTimes = 0:dt:accel(length(accel),1); %this is the times when our "fast" data comes in.
+%This is the data we use in our process model, like accelrometer,
+%gyroscope, and magnetometer.
+slowTimes = 0:1:gps(length(gps),1) %these are the times when our "slow" data comes
+%in.  This is the data we use in our update step, which is our gps position
+n = length(fastTimes);%Every other data times
+nSlow = length(slowTimes);%GPS times
 
-figure(3)
-plot(oTime,oX,oTime,oY,oTime,oZ)
-title('Orientation')
-legend('X','Y','Z')
-grid on
+gps_modified = gps(:,2:3) -gps(1,2:3)
 
-%% Magnetic Field
-magDatetime = MagneticField.Timestamp;
-[maghrs, magm, mags] = hms(magDatetime);
-magTime = magm*60 + mags - (magm(1)*60 + mags(1));
-magX = MagneticField.X;
-magY = MagneticField.Y;
-magZ = MagneticField.Z;
+xm = zeros(8,n); %x-hat-minus
+xh = zeros(8,n); %x-hat
 
-figure(4)
-plot(magTime,magX,magTime,magY,magTime,magZ)
-title('Magnetic Field')
-legend('X','Y','Z')
-grid on
-
-
-
-
-%x(k) = f(x(k-1))+ w(k-1)
-%z(k) = h(x(k))+v(k)
-%Structure of the state matrix : 
-% [accx]
-% [accy]
-% [accz]
-% [avx]
-% [avy]
-% [avz]
-% [ox]
-% [oy]
-% [oz]
-% [magx]
-% [magy]
-% [magz]
-% 
-% 
-% 
-% 
-%
-
-
-%Optimal Estimate Xo_est = E[xo]
-
-Xo_est = [accX(1),accY(1),accZ(1),avX(1),avY(1),avZ(1),oX(1),oY(1),oZ(1),magX(1),magY(1),magZ(1)]
-
-%Covariance Po
-
-%Po = 
-
-
-
-
-
-
-
-
-
-
-
-
+gps_x = gps_modified(:,1)* 110862.9887;
+gps_y = gps_modified(:,2)* 95877.94;
 
