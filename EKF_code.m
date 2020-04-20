@@ -33,6 +33,19 @@ gps_modified = gps(:,2:3) -gps(1,2:3)
 xm = zeros(8,n); %x-hat-minus
 xh = zeros(8,n); %x-hat
 
+%now we add noise to the accelerometer measurement
+acc_var = 0.125^2; %std of accelerometer is 0.125 m/s^2
+
+%we add noise to the gyro measurement
+yawRate_var = 0.125^2;
+
+%now we rotate the mag field vector into the sensor coordinate frame and
+%add noise.
+mag_var = 0.125^2;
+
+%now we add noise to the gps measurement
+gps_var = 0.125^2;
+
 gps_x = gps_modified(:,1)* 110862.9887;
 gps_y = gps_modified(:,2)* 95877.94;
 
@@ -177,4 +190,9 @@ end
 function Q = get_Q(acc_var, yawRate_var, mag_var)
 %get_Q is a function to get the matrix Q
  Q = diag([1, 1, 1, 1, 1, 1, 1, 1])*0.02;
+end
+
+function cx = nonlinear_measurement(xk)
+%This is the nonlinear version of z=Hx
+cx = get_H()*xk;
 end
