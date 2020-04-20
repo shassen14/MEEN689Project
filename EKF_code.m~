@@ -1,5 +1,6 @@
 clc;clear all;close all;
-%% This is some documentation
+
+% This is some documentation
 %this is the state x:
 % x = [x
 %     y
@@ -11,9 +12,9 @@ clc;clear all;close all;
 %     thetad]
 %we have 8 states
 
-%% This is Our Real Data!!
+% This is Our Real Data!!
 
-mat_file = 'data_collection/walk2_100.mat';
+mat_file = 'data_collection/walk1_went too far.mat';
 load(mat_file)
 
 [accel, gyro, mag_field, orientation, gps] = dataExtract(mat_file);
@@ -27,8 +28,7 @@ slowTimes = 0:1:gps(length(gps),1) %these are the times when our "slow" data com
 n = length(fastTimes);%Every other data times
 nSlow = length(slowTimes);%GPS times
 
-gps_modified = gps(:,2:3) -gps(1,2:3);
-
+gps_modified = gps(:,2:3) -gps(1,2:3)
 
 xm = zeros(8,n); %x-hat-minus
 xh = zeros(8,n); %x-hat
@@ -53,7 +53,7 @@ slow_y = [gps_x,gps_y]';%ToDo change slow_y to slow_measurements
 fastMeasurements = [accel(:,2),accel(:,3), gyro(:,4), mag_field(:,2), mag_field(:,3)]';
 
 %% This is our EKF!! :D
-x_0 = [0 0 0 1 -1 0 atan2(gps_y(2)-gps_y(1),gps_x(2)-gps_x(1)) 1]'; %setting our state's initial condition
+x_0 = [0 0 0 1 -1 0 0 1]'; %setting our state's initial condition
 P0 = diag([1 1 1 1 1 1 1 1]); %initializing P.  this is a guess
 P = zeros(8,8,n); %initializing a variable for all the P(k)
 K = zeros(8,2,nSlow); %initializing a variable for all the K(k)
@@ -73,8 +73,8 @@ slowCounter = 1; %this is the counter to tell what "slow" measurement we
 %are using.
 
 %FYI, there is a problem with the EKF not going to the last data point, but
-%I don't think that's important right nw.
-for i = 2:length(fastTimes)-1000
+%I don't think that's important right now.
+for i = 2:length(fastTimes)-1
     %do prediction step
     fm = fastMeasurements(:,1); %this is just an abbreviation 
     xm(:,i) = nonlinear_process(dt,xh(:,i-1),fastMeasurements(:,i));
@@ -91,25 +91,7 @@ for i = 2:length(fastTimes)-1000
     end
 end
 
-%% plots
-figure(1)
-plot(xh(1,:),xh(2,:),'-b',gps_x,gps_y,'og')
-title('position')
-legend('estimated','gps measured')
-grid on; axis equal
 
-figure(2)
-yaw2plot = getMeasuredYaw2plot(yaw,fastMeasurements);
-plot(fastTimes,yaw,'-r',fastTimes,xh(7,:),'-b',fastTimes,yaw2plot,'--g')
-title('Yaw Angle')
-legend('real','estimated','measured from mag')
-grid on; axis equal
-
-figure(3)
-plot(fastTimes,yawRate,'-r',fastTimes,xh(8,:),'-b',fastTimes,yawRate_measured,'--g')
-title('yaw rate')
-legend('real','measured')
-grid on;
 
 %% These are functions to get the matrices and vectors we use
 function A = get_A(dt, xk, fastMeasurements)
@@ -209,6 +191,7 @@ function Q = get_Q(acc_var, yawRate_var, mag_var)
 %get_Q is a function to get the matrix Q
  Q = diag([1, 1, 1, 1, 1, 1, 1, 1])*0.02;
 end
+
 function cx = nonlinear_measurement(xk)
 %This is the nonlinear version of z=Hx
 cx = get_H()*xk;
