@@ -15,22 +15,23 @@ R = [cos(theta) -sin(theta);
 new_xy = [xk(1);xk(2)] + [xk(3);xk(4)]*dt + R*[acc_x;acc_y]/2*dt^2;
 new_xyd = [xk(3);xk(4)] + R*[acc_x;acc_y]*dt;
 new_xydd = R*[acc_x;acc_y];
-% new_yaw = (2 + 50/60)/180*pi - atan2(mag_y,mag_x);
-new_yaw = [xk(7) + gyro*dt];
+new_yaw = (90 - (2 + 50/60))/180*pi - atan2(mag_y,mag_x);
+%new_yaw = xk(7) + gyro*dt;
+% new_yaw = -pi*orient/180;
 
-weRnotOK = 1;
-%this is to correct the new yaw from the magnetometers if we have completed
-%1 or more full circles.  Our yaw angle should be able to take any number,
-%but the atan2 function only returns numbers between 0 and 2*pi
-while weRnotOK
-    if new_yaw > theta + 320/180*pi %if yaw~-179 & new_yaw ~ 179
-        new_yaw = new_yaw - 2*pi;
-    elseif new_yaw < theta - 320/180*pi %if yaw~179 & new_yaw ~ -179
-        new_yaw = new_yaw + 2*pi;
-    else
-        weRnotOK = 0;
-    end
-end
+% weRnotOK = 1;
+% %this is to correct the new yaw from the magnetometers if we have completed
+% %1 or more full circles.  Our yaw angle should be able to take any number,
+% %but the atan2 function only returns numbers between 0 and 2*pi
+% while weRnotOK
+%     if new_yaw > theta + 320/180*pi %if yaw~-179 & new_yaw ~ 179
+%         new_yaw = new_yaw - 2*pi;
+%     elseif new_yaw < theta - 320/180*pi %if yaw~179 & new_yaw ~ -179
+%         new_yaw = new_yaw + 2*pi;
+%     else
+%         weRnotOK = 0;
+%     end
+% end
 
 %we could have a problem here about 361->1 and so on
 new_yaw_dot = gyro;

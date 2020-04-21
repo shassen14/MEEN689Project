@@ -52,7 +52,7 @@ oX = Orientation.X;
 oY = Orientation.Y;
 oZ = Orientation.Z;
 
-% [time, pitch, roll, yaw]
+% [time, yaw,  and I don't know the others. This is weird
 orientation = [oTime, oX, oY, oZ];
 
 

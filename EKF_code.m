@@ -46,19 +46,22 @@ gps_x = gps(:,3) * 95877.94;
 gps_x = gps_x - gps_x(1);
 gps_y = gps_y - gps_y(1);
 
-yaw = pi*(2+50/60)/180 - atan2(mag_field(:,3), mag_field(:,2))
+yaw = 0*pi*(2+50/60)/180 + atan2(mag_field(:,3), mag_field(:,2));
+% q = ecompass(accel(:,2:4),mag_field(:,2:4));
+% e = eulerd(q,'ZYX','frame');
+% e1 = e(:,1)-90
 
 % have fast and slow measurements in one array. I've added orientation for
 % debugging purposes
 slow_measurements = [gps_x,gps_y]';
-fast_measurements = [accel(:,2),accel(:,3), gyro(:,4), mag_field(:,2), mag_field(:,3), orientation(:,4)]';
+fast_measurements = [accel(:,2),accel(:,3), gyro(:,4), mag_field(:,2), mag_field(:,3), orientation(:,2)]';
 
 % Here are the variances we assume for accelerometer, gyro, and
 % magnetometer, and gps. ToDo: change the variances 
-acc_var = 0.9^2; % std of accelerometer is 0.125 m/s^2
-gyro_var = 1.40^2;
-mag_var = 1.0^2;
-gps_var = 20.125^2;
+acc_var = 10.0^2; % std of accelerometer is 0.125 m/s^2
+gyro_var = 1.20^2;
+mag_var = 10.0^2;
+gps_var = 0.5^2;
 
 
 %% This is our EKF!! :D
@@ -66,9 +69,9 @@ gps_var = 20.125^2;
 xm = zeros(8,n_fast); %x-hat-minus
 xh = zeros(8,n_fast); %x-hat
 
-p_init = 10; % this is the number we assume our initial P diagonal to be
+p_init = 1; % this is the number we assume our initial P diagonal to be
 
-x_0 = [0 0 0 0 0 0 atan2(gps_y(4)-gps_y(1),gps_x(4)-gps_x(1)) 1]'; %setting our state's initial condition
+x_0 = [0 0 0 1 0 0 atan2(gps_y(4)-gps_y(1),gps_x(4)-gps_x(1)) 1]'; %setting our state's initial condition
 P0 = diag([p_init p_init p_init p_init p_init p_init p_init p_init]); %initializing P.  this is a guess
 P = zeros(8,8,n_fast); %initializing a variable for all the P(k)
 K = zeros(8,2,n_slow); %initializing a variable for all the K(k)
@@ -84,7 +87,7 @@ K = zeros(8,2,n_slow); %initializing a variable for all the K(k)
 
 xh(:,1) = x_0; %setting the initial value for x-hat and P
 P(:,:,1) = P0;
-slowCounter = 1; %this is the counter to tell what "slow" measurement we 
+slowCounter = 4; %this is the counter to tell what "slow" measurement we 
 %are using.
 
 %FYI, there is a problem with the EKF not going to the last data point, but
@@ -114,7 +117,7 @@ legend('estimated','gps measured')
 grid on; axis equal
 
 figure(12)
-plot(orientation(:,1), orientation(:,4))
+plot(orientation(:,1), orientation(:,2))
 
 figure(13)
 plot(mag_field(:,2),mag_field(:,4))
@@ -124,15 +127,15 @@ plot(gyro(:,1), gyro(:,4))
 
 figure(2)
 yaw2plot = getMeasuredYaw2plot(yaw,fast_measurements);
-plot(fast_times,xh(7,:),'-b',fast_times,yaw2plot,'--g')
+plot(fast_times,xh(7,:),'b',fast_times,yaw2plot,'--g', fast_times, pi*orientation(:,2)/180)
 title('Yaw Angle')
-legend('estimated','measured from mag')
+legend('estimated','measured from mag', 'orientation reading')
 grid on; axis equal
 
 figure(3)
-plot(fastTimes,yawRate,'-r',fastTimes,xh(8,:),'-b',fastTimes,yawRate_measured,'--g')
+plot(fast_times,xh(8,:),'-b')
 title('yaw rate')
-legend('real','measured')
+legend('measured')
 grid on;
 
 %% These are functions to get the matrices and vectors we use

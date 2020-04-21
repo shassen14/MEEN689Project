@@ -2,8 +2,8 @@ function A = get_A(dt, xk, fastMeasurements)
 %get_A is a function to get the matrix A, once it has been linearized
 ax_measured = fastMeasurements(1);
 ay_measured = fastMeasurements(2);
-mag_x = fastMeasurements(4);
-mag_y = fastMeasurements(5);
+% mag_x = fastMeasurements(4);
+% mag_y = fastMeasurements(5);
 
 % theta = (2+50/60)/180*pi - atan2(mag_y, mag_x);
 theta = xk(7);
