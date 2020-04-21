@@ -1,3 +1,4 @@
+clear all; clc; close all;
 %This is an EKF that uses fake data.
 %It's not pretty, and doesn't work perfectly, but it runs, so I want to
 %let y'all have a look too.
@@ -137,16 +138,9 @@ grid on;
 %% These are functions to get the matrices and vectors we use
 function A = get_A(dt, xk, fastMeasurements)
 %get_A is a function to get the matrix A, once it has been linearized
-theta = xk(7);
 ax_measured = fastMeasurements(1);
 ay_measured = fastMeasurements(2);
-% if theta ~= 0
-%     ax_coeff = (ax_measured*cos(theta) - ay_measured*sin(theta))/theta;
-%     ay_coeff = (ax_measured*sin(theta) + ay_measured*cos(theta))/theta;
-% else
-%     ax_coeff = ax_measured;
-%     ay_coeff = ay_measured;
-% end
+
 
 ax_coeff = ax_measured*-sin(theta) - ay_measured*cos(theta);
 ay_coeff = ax_measured*cos(theta) - ay_measured*-sin(theta);
@@ -157,8 +151,8 @@ A = [1 0 dt 0 0 0 ax_coeff/2*dt^2 0
     0 0 0 1 0 0 ay_coeff*dt 0
     0 0 0 0 0 0 ax_coeff 0
     0 0 0 0 0 0 ay_coeff 0
-    0 0 0 0 0 0 0 0
-    0 0 0 0 0 0 0 0];
+    0 0 0 0 0 0 1 0
+    0 0 0 0 0 0 0 1];
 end
 
 function B = get_B(mag_x, mag_y, gyro_z)

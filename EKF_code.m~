@@ -1,62 +1,77 @@
 clc;clear all;close all;
+%% This is some documentation
+%{ 
+this is the state x:
+x = [x
+    y
+    xd
+    yd
+    xdd
+    ydd
+    theta
+    thetad]
+we have 8 states
+%}
 
-% This is some documentation
-%this is the state x:
-% x = [x
-%     y
-%     xd
-%     yd
-%     xdd
-%     ydd
-%     theta
-%     thetad]
-%we have 8 states
-
-% This is Our Real Data!!
-
+%% This is Our Real Data!!
+% Extract the data to arrays
 mat_file = 'data_collection/walk1_went too far.mat';
 load(mat_file)
-
 [accel, gyro, mag_field, orientation, gps] = dataExtract(mat_file);
 
-dt = 0.01;%For now
-fastTimes = 0:dt:accel(length(accel),1); %this is the times when our "fast" data comes in.
-%This is the data we use in our process model, like accelrometer,
-%gyroscope, and magnetometer.
-slowTimes = 0:1:gps(length(gps),1) %these are the times when our "slow" data comes
-%in.  This is the data we use in our update step, which is our gps position
-n = length(fastTimes);%Every other data times
-nSlow = length(slowTimes);%GPS times
+% create dt as an array of the fast data (accel, gyro, mag) for the process
+% model update. This is assuming all fast data are synced time wise
+% I noticed fastTimes had more rows than the data collected because at some
+% time steps, the measurements were a little slow (i.e dt = .0105 or .0110)
+dt_fast = gradient(accel(:,1)); 
 
-gps_modified = gps(:,2:3) -gps(1,2:3)
+% create dt as an array of slow data (gps) for the measurement update
+dt_slow = gradient(gps(:,1));
 
-xm = zeros(8,n); %x-hat-minus
-xh = zeros(8,n); %x-hat
+% create times for the fast and slow data
+fast_times = accel(:,1);
+slow_times = gps(:,1);
 
-%now we add noise to the accelerometer measurement
-acc_var = 0.125^2; %std of accelerometer is 0.125 m/s^2
+n_fast = length(fast_times);
+n_slow = length(slow_times);
 
-%we add noise to the gyro measurement
-yawRate_var = 0.125^2;
+% zero out the gps coordinates and convert to utm coordinates
+% [lat, long] = [y,x]
+% gps_modified = gps(:,2:3) - gps(1,2:3);
+% gps_y = gps_modified(:,1) * 110862.9887;
+% gps_x = gps_modified(:,2) * 95877.94;
 
-%now we rotate the mag field vector into the sensor coordinate frame and
-%add noise.
-mag_var = 0.125^2;
+gps_y = gps(:,2) * 110862.9887;
+gps_x = gps(:,3) * 95877.94;
+gps_x = gps_x - gps_x(1);
+gps_y = gps_y - gps_y(1);
 
-%now we add noise to the gps measurement
-gps_var = 0.125^2;
+yaw = pi*(2+50/60)/180 - atan2(mag_field(:,3), mag_field(:,2))
 
-gps_x = gps_modified(:,1)* 110862.9887;
-gps_y = gps_modified(:,2)* 95877.94;
+% have fast and slow measurements in one array. I've added orientation for
+% debugging purposes
+slow_measurements = [gps_x,gps_y]';
+fast_measurements = [accel(:,2),accel(:,3), gyro(:,4), mag_field(:,2), mag_field(:,3), orientation(:,4)]';
 
-slow_y = [gps_x,gps_y]';%ToDo change slow_y to slow_measurements
-fastMeasurements = [accel(:,2),accel(:,3), gyro(:,4), mag_field(:,2), mag_field(:,3)]';
+% Here are the variances we assume for accelerometer, gyro, and
+% magnetometer, and gps. ToDo: change the variances 
+acc_var = 0.9^2; % std of accelerometer is 0.125 m/s^2
+gyro_var = 1.40^2;
+mag_var = 1.0^2;
+gps_var = 20.125^2;
+
 
 %% This is our EKF!! :D
-x_0 = [0 0 0 1 -1 0 0 1]'; %setting our state's initial condition
-P0 = diag([1 1 1 1 1 1 1 1]); %initializing P.  this is a guess
-P = zeros(8,8,n); %initializing a variable for all the P(k)
-K = zeros(8,2,nSlow); %initializing a variable for all the K(k)
+% to store all the measurement
+xm = zeros(8,n_fast); %x-hat-minus
+xh = zeros(8,n_fast); %x-hat
+
+p_init = 10; % this is the number we assume our initial P diagonal to be
+
+x_0 = [0 0 0 0 0 0 atan2(gps_y(4)-gps_y(1),gps_x(4)-gps_x(1)) 1]'; %setting our state's initial condition
+P0 = diag([p_init p_init p_init p_init p_init p_init p_init p_init]); %initializing P.  this is a guess
+P = zeros(8,8,n_fast); %initializing a variable for all the P(k)
+K = zeros(8,2,n_slow); %initializing a variable for all the K(k)
 
 %this is the outline for our EKF
 %do prediction step, with fixed dt, 
@@ -73,16 +88,16 @@ slowCounter = 1; %this is the counter to tell what "slow" measurement we
 %are using.
 
 %FYI, there is a problem with the EKF not going to the last data point, but
-%I don't think that's important right now.
-for i = 2:length(fastTimes)-1
+%I don't think that's important right nw.
+for i = 2:length(fast_times)-1000
     %do prediction step
-    fm = fastMeasurements(:,1); %this is just an abbreviation 
-    xm(:,i) = nonlinear_process(dt,xh(:,i-1),fastMeasurements(:,i));
-    Pm = get_A(dt,xm(:,i),fm)*P(i-1)*get_A(dt,xm(:,i),fm)' + get_Q(acc_var, yawRate_var, mag_var);
-    if slowTimes(slowCounter) < fastTimes(i+1)
+    fm = fast_measurements(:,1); %this is just an abbreviation 
+    xm(:,i) = nonlinear_process(dt_fast(i),xh(:,i-1),fast_measurements(:,i));
+    Pm = get_A(dt_fast(i),xm(:,i),fm)*P(i-1)*get_A(dt_fast(i),xm(:,i),fm)' + get_Q(acc_var, gyro_var, mag_var);
+    if slow_times(slowCounter) < fast_times(i+1)
         %do update step
         K(:,:,slowCounter) = (Pm*get_H()')/(get_H()*Pm*get_H()' + get_R(sqrt(gps_var)*3));
-        xh(:,i) = xm(:,i) + K(:,:,slowCounter)*(slow_y(:,slowCounter) - nonlinear_measurement(xm(:,i)));
+        xh(:,i) = xm(:,i) + K(:,:,slowCounter)*(slow_measurements(:,slowCounter) - nonlinear_measurement(xm(:,i)));
         P(:,:,i) = (eye(8) - K(:,:,slowCounter)*get_H())*Pm;
         slowCounter = slowCounter + 1;
     else
@@ -91,108 +106,37 @@ for i = 2:length(fastTimes)-1
     end
 end
 
+%% plots
+figure(1)
+plot(xh(1,:),xh(2,:),'-ob',gps_x,gps_y,'og')
+title('position')
+legend('estimated','gps measured')
+grid on; axis equal
 
+figure(12)
+plot(orientation(:,1), orientation(:,4))
+
+figure(13)
+plot(mag_field(:,2),mag_field(:,4))
+
+figure(14)
+plot(gyro(:,1), gyro(:,4))
+
+figure(2)
+yaw2plot = getMeasuredYaw2plot(yaw,fast_measurements);
+plot(fast_times,xh(7,:),'-b',fast_times,yaw2plot,'--g')
+title('Yaw Angle')
+legend('estimated','measured from mag')
+grid on; axis equal
+
+figure(3)
+plot(fastTimes,yawRate,'-r',fastTimes,xh(8,:),'-b',fastTimes,yawRate_measured,'--g')
+title('yaw rate')
+legend('real','measured')
+grid on;
 
 %% These are functions to get the matrices and vectors we use
-function A = get_A(dt, xk, fastMeasurements)
-%get_A is a function to get the matrix A, once it has been linearized
-theta = xk(7);
-ax_measured = fastMeasurements(1);
-ay_measured = fastMeasurements(2);
-% if theta ~= 0
-%     ax_coeff = (ax_measured*cos(theta) - ay_measured*sin(theta))/theta;
-%     ay_coeff = (ax_measured*sin(theta) + ay_measured*cos(theta))/theta;
-% else
-%     ax_coeff = ax_measured;
-%     ay_coeff = ay_measured;
-% end
-
-ax_coeff = ax_measured*-sin(theta) - ay_measured*cos(theta);
-ay_coeff = ax_measured*cos(theta) - ay_measured*-sin(theta);
-
-A = [1 0 dt 0 0 0 ax_coeff/2*dt^2 0
-    0 1 0 dt 0 0 ay_coeff/2*dt^2 0
-    0 0 1 0 0 0 ax_coeff*dt 0
-    0 0 0 1 0 0 ay_coeff*dt 0
-    0 0 0 0 0 0 ax_coeff 0
-    0 0 0 0 0 0 ay_coeff 0
-    0 0 0 0 0 0 0 0
-    0 0 0 0 0 0 0 0];
-end
-
-
-function x_hat_minus = nonlinear_process(dt, xk, fastMeasurements)
-%nonlinear_process is the nonlinear x=A(x) process model
-%new_state = zeros(8,1);
-theta = xk(7);
-acc_x = fastMeasurements(1);
-acc_y = fastMeasurements(2);
-gyro = fastMeasurements(3);
-mag_x = fastMeasurements(4);
-mag_y = fastMeasurements(5);
-
-R = [cos(theta) -sin(theta);
-    sin(theta) cos(theta)];
-
-new_xy = [xk(1);xk(2)] + [xk(3);xk(4)]*dt + R*[acc_x;acc_y]/2*dt^2;
-new_xyd = [xk(3);xk(4)] + R*[acc_x;acc_y]*dt;
-new_xydd = R*[acc_x;acc_y];
-new_yaw = (2 + 50/60)/180*pi - atan2(mag_y,mag_x);
-
-weRnotOK = 1;
-%this is to correct the new yaw from the magnetometers if we have completed
-%1 or more full circles.  Our yaw angle should be able to take any number,
-%but the atan2 function only returns numbers between 0 and 2*pi
-while weRnotOK
-    if new_yaw > theta + 320/180*pi %if yaw~-179 & new_yaw ~ 179
-        new_yaw = new_yaw - 2*pi;
-    elseif new_yaw < theta - 320/180*pi %if yaw~179 & new_yaw ~ -179
-        new_yaw = new_yaw + 2*pi;
-    else
-        weRnotOK = 0;
-    end
-end
-
-%we could have a problem here about 361->1 and so on
-new_yaw_dot = gyro;
-new_state = [new_xy; new_xyd; new_xydd; new_yaw; new_yaw_dot];
-x_hat_minus = new_state;
-
-end
 
 
 
-function H = get_H()
-%get_H is a function to get the vector H
-%lat2meters = 110862.9887;
-%long2meters = 95877.94;
-%H = [1/lat2meters, 0, 0, 0, 0, 0, 0, 0;
-%    0, 1/long2meters, 0, 0, 0, 0, 0, 0];
-%since our GPS uncertainty is given in meters, I think we should say our
-%measurement is also in meters - having such small numbers in H might cause
-%problems, but idk - we should probably try it both ways
-H = [1, 0, 0, 0, 0, 0, 0, 0;
-    0, 1, 0, 0, 0, 0, 0, 0];
-end
 
-
-function R = get_R(h_accuracy)
-%get R is a function to get the matrix R
-gps_variance = (h_accuracy/3)^2; %I'm assuming the "accuracy" it gives us 
-%is 3 times the standard deviation, but this is just a guess.
-
-R = diag([gps_variance, gps_variance]); %maybe instead of a diagonal
-%matrix, all the elements should be the same, since the latitude and
-%longitude variances are related?
-end
-
-
-function Q = get_Q(acc_var, yawRate_var, mag_var)
-%get_Q is a function to get the matrix Q
- Q = diag([1, 1, 1, 1, 1, 1, 1, 1])*0.02;
-end
-
-function cx = nonlinear_measurement(xk)
-%This is the nonlinear version of z=Hx
-cx = get_H()*xk;
-end
