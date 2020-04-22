@@ -29,6 +29,7 @@ Figure 5 shows the local acceleration from the phone, as measured by the acceler
 Figure 6 shows the global acceleration of the phone, as estimated by the kalman filter.
 
 ![figure 6](/graphs/acc_global.jpg)
+
 Lastly, figure 7 shows the magnitude of the velocity of the phone.  The blue line shows the speed measured by the GPS, and the orange line shows the speed estimate by the kalman filter.
 
 ![figure 7](/graphs/speed.jpg)
