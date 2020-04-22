@@ -153,12 +153,19 @@ grid on; axis equal
 % legend('estimated','measured from mag', 'orientation reading')
 % grid on;
 
+for i =2:length(yaw)
+    if  yaw(i) > yaw(i-1) + 320/180*pi %if yaw~-179 & new_yaw ~ 179
+        yaw(i) = yaw(i) - 2*pi;
+    elseif yaw(i) < yaw(i-1) - 320/180*pi %if yaw~179 & new_yaw ~ -179
+        yaw(i) = yaw(i) + 2*pi;
+    end
+end
 
 figure(2)
 plot(fast_times,yaw/pi*180,'-b')
 title('Yaw Angle')
 legend('Estimated from Magnetometer')
-ylabel('Angle (rad)')
+ylabel('Angle (deg)')
 xlabel('Time (s)')
 grid on; 
 
