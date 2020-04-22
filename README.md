@@ -1,6 +1,12 @@
 # MEEN 689 Project README
 
-Please see the .txt file in the release for a list of team names and UINs.
+## Team Members:
+- Akshay Sarvesh
+- DJ Franklin
+- Jadha Gunawan
+- Samir Hassen
+
+Please see the .txt file in the release for the corresponding UIN’s, which is emailed to sri@fastmail.fm
 
 ## How to run the code
 To run the code for our project, please get the v1.1 release of this project and run the  “EKF_code.m” file in Matlab.  This function will generate all the necessary plots. The code uses “drive1.mat” for our raw sensor data.
