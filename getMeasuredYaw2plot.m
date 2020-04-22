@@ -1,7 +1,7 @@
 function yaw2plot = getMeasuredYaw2plot(yaw,fastMeasurements)
 mag_x = fastMeasurements(4,:);
 mag_y = fastMeasurements(5,:);
-new_yaw = (2 + 50/60)/180*pi - atan2(mag_y,mag_x);
+new_yaw = (90-(2 + 50/60))/180*pi - atan2(mag_y,mag_x);
 
 for i =1:length(yaw)
 weRnotOK = 1;

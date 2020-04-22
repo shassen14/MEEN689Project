@@ -18,9 +18,9 @@ R = [cos(theta) -sin(theta);
 new_xy = [xk(1);xk(2)] + [xk(3);xk(4)]*dt + R*[acc_x;acc_y]/2*dt^2;
 new_xyd = [xk(3);xk(4)] + R*[acc_x;acc_y]*dt;
 new_xydd = R*[acc_x;acc_y];
-new_yaw = (90-(2 + 50/60))/180*pi - atan2(mag_y,mag_x);
+% new_yaw = ((2 + 50/60))/180*pi - atan2(mag_y,mag_x);
 % new_yaw = xk(7) + gyro*dt;
-% new_yaw = -pi*orient/180+pi;
+% new_yaw = pi*orient/180;
 
 weRnotOK = 1;
 %this is to correct the new yaw from the magnetometers if we have completed
