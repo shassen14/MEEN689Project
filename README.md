@@ -9,7 +9,7 @@
 Please see the .txt file in the release for the corresponding UIN’s, which is emailed to sri@fastmail.fm
 
 ## How to run the code
-To run the code for our project, please get the v1.2 release of this project and run the  “EKF_code.m” file in Matlab.  This function will generate all the necessary plots. The code uses “drive1.mat” for our raw sensor data.
+To run the code for our project, please get the v1.3 release of this project and run the  “EKF_code.m” file in Matlab.  This function will generate all the necessary plots. The code uses “drive1.mat” for our raw sensor data.
 
 ## Description of Figures
 Figure 1 shows  a plot of the position of the phone as the car was driven around.  It shows the measured GPS coordinates as green circles and the estimated position of the phone as a blue line.  The dimensions of the graph are in meters, and the data is in the global ENU reference frame.  The origin is defined to be wherever the phone started recording data.  The car drove clockwise in a loop, starting from the origin and returning to its original position.
