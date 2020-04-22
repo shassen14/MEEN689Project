@@ -77,9 +77,9 @@ pos_var = 1.5^2;
 vel_var = 1.5^2;
 acc_var = 1.5^2; % std of accelerometer is 0.125 m/s^2
 gyro_var = 1.20^2;
-mag_var = 10.25^2;
+mag_var = 0.00000025^2;
 gps_var = (5.0/3)^2;
-speed_var = 1.25^2;
+speed_var = 0.5^2;
 
 
 %% This is our EKF!! :D
@@ -110,14 +110,14 @@ slowCounter = 1; %this is the counter to tell what "slow" measurement we
 
 %FYI, there is a problem with the EKF not going to the last data point, but
 %I don't think that's important right nw.
-for i = 2:length(fast_times)-300
+for i = 2:length(fast_times)
     %do prediction step
     fm = fast_measurements(:,1); %this is just an abbreviation 
     xm(:,i) = nonlinear_process(dt_fast(i),xh(:,i-1),fast_measurements(:,i));
     Pm = get_A(dt_fast(i),xm(:,i),fm)*P(i-1)*get_A(dt_fast(i),xm(:,i),fm)' + get_Q(pos_var, vel_var, acc_var, gyro_var, mag_var);
-    if slow_times(slowCounter) < fast_times(i+1)
+    if (slowCounter<=n_slow) && (i+1<=n_fast) && (slow_times(slowCounter) < fast_times(i+1))
         %do update step
-        K(:,:,slowCounter) = (Pm*get_H(xm(7,i))')/(get_H(xm(7,i))*Pm*get_H(xm(7,i))' + get_R(gps, speed_var));
+        K(:,:,slowCounter) = (Pm*get_H(xm(7,i))')/(get_H(xm(7,i))*Pm*get_H(xm(7,i))' + get_R((gps(slowCounter,7)/5)^2, speed_var));
         xh(:,i) = xm(:,i) + K(:,:,slowCounter)*(slow_measurements(:,slowCounter) - nonlinear_measurement(xm(:,i)));
         P(:,:,i) = (eye(8) - K(:,:,slowCounter)*get_H(xm(7,i)))*Pm;
         slowCounter = slowCounter + 1;
@@ -136,8 +136,7 @@ figure(1)
 plot(xh(1,:),xh(2,:),'-b',gps_x,gps_y,'og')
 title('position')
 legend('estimated','gps measured')
-xlabel('Global X (m)')
-ylabel('Global Y (m)')
+
 grid on; axis equal
 
 
@@ -147,11 +146,20 @@ grid on; axis equal
 % title('Yaw Angle')
 % legend('estimated','measured from mag', 'orientation reading')
 % grid on; 
+% 
+% figure(2)
+% plot(fast_times,mod(xh(7,:)/pi*180+360,360),'b',fast_times,mod(yaw/pi*180+360,360),'--g', fast_times, mod(orientation(:,2)+360,360))
+% title('Yaw Angle')
+% legend('estimated','measured from mag', 'orientation reading')
+% grid on;
+
 
 figure(2)
-plot(fast_times,mod(xh(7,:)/pi*180+360,360),'b',fast_times,mod(yaw/pi*180+360,360),'--g', fast_times, mod(orientation(:,2)+360,360))
+plot(fast_times,yaw/pi*180,'-b')
 title('Yaw Angle')
-legend('estimated','measured from mag', 'orientation reading')
+legend('Estimated from Magnetometer')
+xlabel('Global X (m)')
+ylabel('Time (')
 grid on; 
 
 vel_loc_x = cos(xh(7,:)).*xh(3,:) + sin(xh(7,:)).*xh(4,:);
@@ -187,15 +195,42 @@ title('Velocity Magnitude')
 legend('GPS Speed', 'Estimated Speed')
 grid on; 
 
-figure(8)
-boxplot(gps(:,7))
-grid on;
+% figure(8)
+% boxplot(gps(:,7))
+% grid on;
 
-figure(13)
-plot(mag_field(:,2),mag_field(:,3))
-title('Mag X vs Mag Y')
-grid on; axis equal
+% figure(9)
+% plot(mag_field(:,2),mag_field(:,3))
+% title('Mag X vs Mag Y')
+% grid on; axis equal
 
+
+
+% figure(10);
+% hold on
+% plot1 = scatter(gps_x(1),gps_y(1),'og');
+% plot2 = plot(xh(1,1), xh(2,1),'-b');
+% xlim([min(gps_x)-20 max(gps_x)+20]);
+% ylim([min(gps_y)-20 max(gps_y)+20]);
+% xlabel('Global X (m)')
+% ylabel('Global Y (m)')
+% title('Position')
+% % set(gca,'Color','none');
+% % set(gca,'CLim',[0, 1E-4]);
+% grid on;
+% 
+% count = 1;
+% for k = 2:length(xh) 
+%     plot2.XData = xh(1,1:k);
+%     plot2.YData = xh(2,1:k);
+%     if (count<=n_slow) && (k+1<=n_fast) && (slow_times(count) < fast_times(k+1))
+%         plot1.XData = gps_x(1:count);
+%         plot1.YData = gps_y(1:count);
+%         count = count + 1;
+%     end
+%     % pause 2/10 second:
+%     pause(0.004)
+% end
 %% These are functions to get the matrices and vectors we use
 
 

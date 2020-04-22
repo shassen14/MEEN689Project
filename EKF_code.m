@@ -136,8 +136,7 @@ figure(1)
 plot(xh(1,:),xh(2,:),'-b',gps_x,gps_y,'og')
 title('position')
 legend('estimated','gps measured')
-xlabel('Global X (m)')
-ylabel('Global Y (m)')
+
 grid on; axis equal
 
 
@@ -147,11 +146,20 @@ grid on; axis equal
 % title('Yaw Angle')
 % legend('estimated','measured from mag', 'orientation reading')
 % grid on; 
+% 
+% figure(2)
+% plot(fast_times,mod(xh(7,:)/pi*180+360,360),'b',fast_times,mod(yaw/pi*180+360,360),'--g', fast_times, mod(orientation(:,2)+360,360))
+% title('Yaw Angle')
+% legend('estimated','measured from mag', 'orientation reading')
+% grid on;
+
 
 figure(2)
-plot(fast_times,mod(xh(7,:)/pi*180+360,360),'b',fast_times,mod(yaw/pi*180+360,360),'--g', fast_times, mod(orientation(:,2)+360,360))
+plot(fast_times,yaw/pi*180,'-b')
 title('Yaw Angle')
-legend('estimated','measured from mag', 'orientation reading')
+legend('Estimated from Magnetometer')
+ylabel('Angle (rad)')
+xlabel('Time (s)')
 grid on; 
 
 vel_loc_x = cos(xh(7,:)).*xh(3,:) + sin(xh(7,:)).*xh(4,:);
@@ -159,43 +167,80 @@ vel_loc_y = -sin(xh(7,:)).*xh(3,:) + cos(xh(7,:)).*xh(4,:);
 
 figure(3)
 plot(fast_times,vel_loc_x,fast_times, vel_loc_y)
-title('local velocity')
-legend('Velocity X', 'Velocity Y')
+title('Local Velocity')
+legend('velocity x', 'velocity y')
+ylabel('Velocity (m/s)')
+xlabel('Time (s)')
 grid on; 
 
 figure(4)
 plot(fast_times,xh(3,:),fast_times, xh(4,:))
 title('Global Velocity')
 legend('Velocity X', 'Velocity Y')
+ylabel('Velocity (m/s)')
+xlabel('Time (s)')
 grid on; 
 
 figure(5)
 plot(fast_times,fast_measurements(1,:),fast_times, fast_measurements(2,:))
 title('Local Acceleration')
 legend('acceleration x', 'acceleration y')
+ylabel('Acceleration (m/s^2)')
+xlabel('Time (s)')
 grid on; 
 
 figure(6)
 plot(fast_times,xh(5,:),fast_times, xh(6,:))
 title('Global Acceleration')
 legend('Acceleration X', 'Acceleration Y')
+ylabel('Acceleration (m/s^2)')
+xlabel('Time (s)')
 grid on; 
 
 figure(7)
 plot(slow_times, speed, fast_times, sqrt(xh(3,:).^2 + xh(4,:).^2))
 title('Velocity Magnitude')
 legend('GPS Speed', 'Estimated Speed')
+ylabel('Speed (m/s)')
+xlabel('Time (s)')
 grid on; 
 
-figure(8)
-boxplot(gps(:,7))
-grid on;
+% figure(8)
+% boxplot(gps(:,7))
+% grid on;
 
-figure(13)
-plot(mag_field(:,2),mag_field(:,3))
-title('Mag X vs Mag Y')
-grid on; axis equal
+% figure(9)
+% plot(mag_field(:,2),mag_field(:,3))
+% title('Mag X vs Mag Y')
+% grid on; axis equal
 
+
+
+% figure(10);
+% hold on
+% plot1 = scatter(gps_x(1),gps_y(1),'og');
+% plot2 = plot(xh(1,1), xh(2,1),'-b');
+% xlim([min(gps_x)-20 max(gps_x)+20]);
+% ylim([min(gps_y)-20 max(gps_y)+20]);
+% xlabel('Global X (m)')
+% ylabel('Global Y (m)')
+% title('Position')
+% % set(gca,'Color','none');
+% % set(gca,'CLim',[0, 1E-4]);
+% grid on;
+% 
+% count = 1;
+% for k = 2:length(xh) 
+%     plot2.XData = xh(1,1:k);
+%     plot2.YData = xh(2,1:k);
+%     if (count<=n_slow) && (k+1<=n_fast) && (slow_times(count) < fast_times(k+1))
+%         plot1.XData = gps_x(1:count);
+%         plot1.YData = gps_y(1:count);
+%         count = count + 1;
+%     end
+%     % pause 2/10 second:
+%     pause(0.004)
+% end
 %% These are functions to get the matrices and vectors we use
 
 
