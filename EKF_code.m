@@ -16,10 +16,15 @@ we have 8 states
 
 %% This is Our Real Data!!
 % Extract the data to arrays
-mat_file = 'data_collection/square1.mat';
+mat_file = 'data_collection/drive3.mat';
 load(mat_file)
 [accel, gyro, mag_field, orientation, gps] = dataExtract(mat_file);
 
+if length(accel) ~= length(gyro) 
+    gyro = gyro(1:end-1,:);
+elseif length(accel) ~= length(orientation)
+    orientation = orientation(1:end-1,:);
+end
 % create dt as an array of the fast data (accel, gyro, mag) for the process
 % model update. This is assuming all fast data are synced time wise
 % I noticed fastTimes had more rows than the data collected because at some
@@ -72,9 +77,9 @@ pos_var = 1.5^2;
 vel_var = 1.5^2;
 acc_var = 1.5^2; % std of accelerometer is 0.125 m/s^2
 gyro_var = 1.20^2;
-mag_var = 0.25^2;
-gps_var = 0.5^2;
-speed_var = 0.25^2;
+mag_var = 0.00000025^2;
+gps_var = (5.0/3)^2;
+speed_var = 0.5^2;
 
 
 %% This is our EKF!! :D
@@ -105,14 +110,14 @@ slowCounter = 1; %this is the counter to tell what "slow" measurement we
 
 %FYI, there is a problem with the EKF not going to the last data point, but
 %I don't think that's important right nw.
-for i = 2:length(fast_times)-300
+for i = 2:length(fast_times)
     %do prediction step
     fm = fast_measurements(:,1); %this is just an abbreviation 
     xm(:,i) = nonlinear_process(dt_fast(i),xh(:,i-1),fast_measurements(:,i));
     Pm = get_A(dt_fast(i),xm(:,i),fm)*P(i-1)*get_A(dt_fast(i),xm(:,i),fm)' + get_Q(pos_var, vel_var, acc_var, gyro_var, mag_var);
-    if slow_times(slowCounter) < fast_times(i+1)
+    if (slowCounter<=n_slow) && (i+1<=n_fast) && (slow_times(slowCounter) < fast_times(i+1))
         %do update step
-        K(:,:,slowCounter) = (Pm*get_H(xm(7,i))')/(get_H(xm(7,i))*Pm*get_H(xm(7,i))' + get_R(gps_var, speed_var));
+        K(:,:,slowCounter) = (Pm*get_H(xm(7,i))')/(get_H(xm(7,i))*Pm*get_H(xm(7,i))' + get_R((gps(slowCounter,7)/5)^2, speed_var));
         xh(:,i) = xm(:,i) + K(:,:,slowCounter)*(slow_measurements(:,slowCounter) - nonlinear_measurement(xm(:,i)));
         P(:,:,i) = (eye(8) - K(:,:,slowCounter)*get_H(xm(7,i)))*Pm;
         slowCounter = slowCounter + 1;
@@ -131,6 +136,8 @@ figure(1)
 plot(xh(1,:),xh(2,:),'-b',gps_x,gps_y,'og')
 title('position')
 legend('estimated','gps measured')
+xlabel('Global X (m)')
+ylabel('Global Y (m)')
 grid on; axis equal
 
 
@@ -142,7 +149,7 @@ grid on; axis equal
 % grid on; 
 
 figure(2)
-plot(fast_times,xh(7,:),'b',fast_times,mod(yaw/pi*180+360,360),'--g', fast_times, mod(orientation(:,2)+360,360))
+plot(fast_times,mod(xh(7,:)/pi*180+360,360),'b',fast_times,mod(yaw/pi*180+360,360),'--g', fast_times, mod(orientation(:,2)+360,360))
 title('Yaw Angle')
 legend('estimated','measured from mag', 'orientation reading')
 grid on; 
@@ -163,17 +170,26 @@ legend('Velocity X', 'Velocity Y')
 grid on; 
 
 figure(5)
-plot(fast_times,xh(5,:),fast_times, xh(6,:))
-title('Global Acceleration')
-legend('Acceleration X', 'Acceleration Y')
-grid on; 
-
-figure(6)
 plot(fast_times,fast_measurements(1,:),fast_times, fast_measurements(2,:))
 title('Local Acceleration')
 legend('acceleration x', 'acceleration y')
 grid on; 
 
+figure(6)
+plot(fast_times,xh(5,:),fast_times, xh(6,:))
+title('Global Acceleration')
+legend('Acceleration X', 'Acceleration Y')
+grid on; 
+
+figure(7)
+plot(slow_times, speed, fast_times, sqrt(xh(3,:).^2 + xh(4,:).^2))
+title('Velocity Magnitude')
+legend('GPS Speed', 'Estimated Speed')
+grid on; 
+
+figure(8)
+boxplot(gps(:,7))
+grid on;
 
 figure(13)
 plot(mag_field(:,2),mag_field(:,3))
