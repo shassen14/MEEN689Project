@@ -1,6 +1,9 @@
-%this gets data from my phone
+%this gets data from our phones and plots it
 %you need to load the data into Matlab with something like
 %load('myData.mat')
+
+%This is just used for plotting, to see what the raw data looks like, and 
+%is not used directly in the EKF
 %% Acceleration
 accDatetime = Acceleration.Timestamp;
 [acchrs, accm, accs] = hms(accDatetime);
